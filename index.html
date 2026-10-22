@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Экран дня</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;height:100%;background:#05070b;color:#e8edf5;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+#wrap{position:absolute;inset:0;padding:4vh 4vw;box-sizing:border-box;display:flex;flex-direction:column}
+#top{display:flex;justify-content:space-between;align-items:flex-start}
+#time{font-size:16vh;font-weight:200;letter-spacing:-.02em;line-height:1}
+#date{font-size:3.6vh;color:#8fa3bf;margin-top:1vh}
+#wx{text-align:right}
+#wxT{font-size:10vh;font-weight:200;line-height:1}
+#wxD{font-size:3vh;color:#8fa3bf}
+#grid{flex:1;display:flex;gap:3vw;margin-top:5vh}
+.card{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:2vh;padding:3vh 2vw}
+.card h2{margin:0 0 2vh;font-size:2.6vh;font-weight:normal;color:#6f86a6;text-transform:uppercase;letter-spacing:.15em}
+#tasks div{font-size:3.4vh;padding:1.1vh 0;border-bottom:1px solid rgba(255,255,255,.05)}
+#rates div{display:flex;justify-content:space-between;font-size:3.6vh;padding:1.1vh 0}
+#rates span{color:#8fa3bf}
+#thesis{font-size:4vh;line-height:1.35;font-style:italic}
+#dim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 2s}
+#hint{position:fixed;right:2vw;bottom:1.5vh;font-size:2vh;color:#3d4a5c}
+</style></head><body>
+<div id="wrap">
+ <div id="top"><div><div id="time">--:--</div><div id="date"></div></div>
+  <div id="wx"><div id="wxT">--°</div><div id="wxD">Актау</div></div></div>
+ <div id="grid">
+  <div class="card"><h2>План на день</h2><div id="tasks"></div></div>
+  <div class="card"><h2>Курсы, ₸</h2><div id="rates"></div></div>
+  <div class="card"><h2>Тезис недели</h2><div id="thesis"></div></div>
+ </div>
+</div>
+<div id="dim"></div><div id="hint">1 — яркость 100% · 2 — 50% · 3 — 0% · 0 — авто</div>
+<script>
+var D=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+var M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+var mode='auto';
+function p(n){return n<10?'0'+n:n}
+function tick(){var d=new Date();
+ document.getElementById('time').innerHTML=p(d.getHours())+':'+p(d.getMinutes());
+ document.getElementById('date').innerHTML=D[d.getDay()]+', '+d.getDate()+' '+M[d.getMonth()];
+ var o=0,h=d.getHours();
+ if(mode=='auto')o=(h>=23||h<7)?0.75:0; else o=mode;
+ document.getElementById('dim').style.opacity=o;}
+function get(u,cb){var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4&&x.status==200){try{cb(JSON.parse(x.responseText))}catch(e){}}};x.open('GET',u,true);x.send()}
+var WX={0:'ясно',1:'малооблачно',2:'облачно',3:'пасмурно',45:'туман',48:'туман',51:'морось',53:'морось',55:'морось',61:'дождь',63:'дождь',65:'ливень',71:'снег',73:'снег',75:'снегопад',80:'ливень',95:'гроза'};
+function weather(){get('https://api.open-meteo.com/v1/forecast?latitude=43.65&longitude=51.17&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto',function(j){var c=j.current;
+ document.getElementById('wxT').innerHTML=Math.round(c.temperature_2m)+'°';
+ document.getElementById('wxD').innerHTML='Актау · '+(WX[c.weather_code]||'')+' · ветер '+Math.round(c.wind_speed_10m/3.6)+' м/с';})}
+function rates(){get('https://open.er-api.com/v6/latest/KZT',function(j){var r=j.rates,h='',L=[['USD','Доллар'],['EUR','Евро'],['RUB','Рубль'],['CNY','Юань']];
+ for(var i=0;i<L.length;i++){h+='<div><span>'+L[i][1]+'</span>'+(1/r[L[i][0]]).toFixed(2)+'</div>'}
+ document.getElementById('rates').innerHTML=h;})}
+function data(){get('data.json?'+Date.now(),function(j){var h='';for(var i=0;i<j.tasks.length;i++)h+='<div>'+j.tasks[i]+'</div>';
+ document.getElementById('tasks').innerHTML=h;document.getElementById('thesis').innerHTML=j.thesis;})}
+document.onkeydown=function(e){var k=e.keyCode;
+ if(k==49)mode=0;else if(k==50)mode=0.5;else if(k==51)mode=0.97;else if(k==48)mode='auto';tick();};
+tick();weather();rates();data();
+setInterval(tick,10000);setInterval(weather,900000);setInterval(rates,3600000);setInterval(data,300000);
+</script></body></html>
