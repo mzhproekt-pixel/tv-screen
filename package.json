@@ -1,0 +1,9 @@
+{
+  "name": "tv-screen",
+  "appName": "Экран дня",
+  "version": "1.0.0",
+  "description": "Часы, погода Актау, курсы валют, задачи на день",
+  "packageType": "app",
+  "appPath": "index.html",
+  "keys": ["1", "2", "3", "0"]
+}
